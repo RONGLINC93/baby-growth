@@ -76,14 +76,15 @@ if (!remotes.includes(REMOTE_NAME)) {
 const argMsg = process.argv[2];
 const msg = argMsg || `chore: update ${new Date().toLocaleString('zh-CN')}`;
 
-// 检查是否有改动
+// 检查是否有未提交改动
 const status = execSync('git status --porcelain', { cwd: ROOT }).toString().trim();
-if (!status) {
-  console.log('\n\x1b[33m[提示] 没有改动，无需推送\x1b[0m');
-} else {
+if (status) {
   run('git add .', 'add');
   run(`git commit -m "${msg.replace(/"/g, '\\"')}"`, `commit: ${msg}`);
-  run(`git push -u ${REMOTE_NAME} ${BRANCH}`, 'push');
+} else {
+  console.log('\n\x1b[33m[提示] 工作区干净，跳过 commit\x1b[0m');
 }
+// 无论是否有新 commit，都执行 push（同步本地未推送的提交）
+run(`git push -u ${REMOTE_NAME} ${BRANCH}`, 'push');
 
 console.log('\n\x1b[32m[完成]\x1b[0m');
