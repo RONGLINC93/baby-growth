@@ -1,0 +1,12 @@
+{
+  "name": "baby-growth",
+  "version": "1.0.0",
+  "description": "宝宝成长记录 - 自定义图片管理",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "push": "node github-sync.js push",
+    "pull": "node github-sync.js pull"
+  },
+  "dependencies": {}
+}
