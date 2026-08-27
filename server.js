@@ -14,6 +14,7 @@ const PORT = 3000;
 const ROOT = __dirname;
 const DATA_FILE = path.join(ROOT, 'data', 'photos.json');
 const CONFIG_FILE = path.join(ROOT, 'data', 'config.json');
+const LEADERBOARD_FILE = path.join(ROOT, 'data', 'leaderboard.json');
 const UPLOAD_DIR = path.join(ROOT, 'uploads');
 const PUBLIC_DIR = path.join(ROOT, 'public');
 
@@ -40,6 +41,13 @@ function readPhotos() {
 }
 function writePhotos(list) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(list, null, 2), 'utf-8');
+}
+function readLeaderboard() {
+  try { return JSON.parse(fs.readFileSync(LEADERBOARD_FILE, 'utf-8')); }
+  catch (e) { return []; }
+}
+function writeLeaderboard(list) {
+  fs.writeFileSync(LEADERBOARD_FILE, JSON.stringify(list, null, 2), 'utf-8');
 }
 function getMime(ext) {
   const map = {
@@ -120,6 +128,33 @@ function handleApi(req, res, body, contentType) {
     writeConfig(current);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+
+  // 1.3 排行榜：获取前二十名
+  if (action === '/api/leaderboard' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(readLeaderboard()));
+    return;
+  }
+  // 1.4 排行榜：提交一局成绩（按用时升序，仅保留前 20 名）
+  if (action === '/api/leaderboard' && req.method === 'POST') {
+    const data = JSON.parse(Buffer.concat(body).toString('utf-8'));
+    const list = readLeaderboard();
+    const record = {
+      time: Math.max(0, Math.floor(Number(data.time) || 0)),
+      score: Math.max(0, Math.floor(Number(data.score) || 0)),
+      hints: Math.max(0, Math.floor(Number(data.hints) || 0)),
+      shuffles: Math.max(0, Math.floor(Number(data.shuffles) || 0)),
+      difficulty: ['easy','normal','hard'].includes(data.difficulty) ? data.difficulty : 'normal',
+      date: new Date().toISOString()
+    };
+    list.push(record);
+    list.sort((a, b) => a.time - b.time || b.score - a.score);
+    const top = list.slice(0, 20);
+    writeLeaderboard(top);
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ ok: true, list: top, record }));
     return;
   }
 

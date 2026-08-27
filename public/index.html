@@ -181,17 +181,32 @@
   /* 右下角操作说明 */
   .help-panel{
     position:fixed;bottom:24px;right:24px;z-index:0;
-    background:rgba(255,255,255,.85);backdrop-filter:blur(8px);
-    padding:14px 18px;border-radius:14px;box-shadow:var(--shadow);
     font-size:.82rem;color:var(--text);max-width:220px;
     transition:transform .3s,opacity .3s;
     pointer-events:auto;
   }
-  .help-panel h4{
-    font-size:.88rem;color:var(--primary);margin-bottom:8px;
-    display:flex;align-items:center;justify-content:space-between;
+  .help-panel .help-toggle{
+    display:none;padding:6px 14px;border:1px solid var(--border);
+    border-radius:999px;background:rgba(255,255,255,.85);color:var(--text);
+    cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15);font-size:.82rem;
   }
-  .help-panel h4 .toggle{cursor:pointer;font-size:1rem;color:var(--muted)}
+  .help-panel.collapsed .help-toggle{display:inline-block}
+  .help-panel.collapsed .help-body{display:none}
+  .help-panel .help-body{
+    background:rgba(255,255,255,.95);
+    padding:14px 18px;border-radius:14px;box-shadow:var(--shadow);
+    border:1px solid var(--border);
+  }
+  .help-panel .help-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:8px;
+  }
+  .help-panel .help-head .title{font-size:.88rem;color:var(--primary);font-weight:700}
+  .help-panel .help-close{
+    border:none;background:none;font-size:1.1rem;line-height:1;
+    cursor:pointer;color:var(--muted);padding:0 4px;
+  }
+  .help-panel .help-close:hover{color:var(--text)}
   .help-panel ul{list-style:none;display:flex;flex-direction:column;gap:6px}
   .help-panel li{display:flex;align-items:center;gap:8px;line-height:1.4}
   .help-panel kbd{
@@ -200,8 +215,6 @@
     font-family:inherit;box-shadow:0 1px 0 #e8d8d8;min-width:18px;text-align:center;
     white-space:nowrap;
   }
-  .help-panel.collapsed ul{display:none}
-  .help-panel.collapsed{max-width:none}
 
   /* 确认删除模态框 */
   .confirm-modal{
@@ -227,6 +240,232 @@
   }
   .confirm-modal .actions .ok{background:linear-gradient(120deg,#ff5050,#ff8fa3);color:#fff}
   .confirm-modal .actions .cancel{background:#f0e0e0;color:var(--text)}
+
+  /* 连连看游戏 */
+  #gameBtn{
+    background:linear-gradient(120deg,#ffb86c,#ff8fa3);
+    box-shadow:0 4px 12px rgba(255,143,163,.4);
+  }
+  /* 游戏界面内的开始大厅（无对局时显示） */
+  .game-lobby{display:none;position:absolute;inset:0;align-items:center;justify-content:center;z-index:5;padding:20px}
+  .game-screen.lobby .game-lobby{display:flex}
+  .game-screen.lobby .game-info{display:none}
+  .game-screen.lobby .game-wrap{display:none}
+  .game-lobby-box{
+    background:rgba(255,255,255,.96);border-radius:18px;padding:36px 44px;text-align:center;
+    box-shadow:var(--shadow);max-width:420px;
+  }
+  .game-lobby-box h2{margin:0 0 10px}
+  .game-lobby-box p{color:var(--muted);margin:0 0 24px;font-size:.9rem}
+  .game-lobby-box .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .game-lobby-box .actions button{padding:11px 26px;font-size:1rem;border:none;border-radius:10px;cursor:pointer;transition:filter .15s}
+  .lobby-start{background:linear-gradient(120deg,#ffb86c,#ff8fa3);color:#fff;box-shadow:0 4px 12px rgba(255,143,163,.4)}
+  .lobby-continue{background:linear-gradient(120deg,#6bcfb5,#4a9fd8);color:#fff;box-shadow:0 4px 12px rgba(74,159,216,.4)}
+  .game-lobby-box .actions button:hover{filter:brightness(1.05)}
+  /* 难度选择卡片 */
+  .diff-cards{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .diff-card{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    padding:16px 22px;min-width:92px;
+    background:#fff;color:#333;border:1px solid #e8e8e8;border-radius:12px;
+    cursor:pointer;transition:transform .18s,box-shadow .18s,background .18s,border-color .18s;
+  }
+  .diff-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.1)}
+  .diff-card .diff-name{font-size:1.05rem;font-weight:600}
+  .diff-card .diff-meta{font-size:.72rem;color:var(--muted)}
+  .diff-easy{border-top:3px solid #52c41a}
+  .diff-easy:hover{border-color:#52c41a;background:#f6ffed}
+  .diff-normal{border-top:3px solid #fa8c16}
+  .diff-normal:hover{border-color:#fa8c16;background:#fff7e6}
+  .diff-hard{border-top:3px solid #f5222d}
+  .diff-hard:hover{border-color:#f5222d;background:#fff1f0}
+  .lobby-back{
+    margin-top:16px;background:none;border:none;color:var(--muted);cursor:pointer;
+    font-size:.85rem;text-decoration:underline;padding:4px 8px;
+  }
+  .game-screen{
+    position:fixed;inset:0;z-index:500;
+    background:linear-gradient(135deg,var(--bg1),var(--bg2));
+    display:none;flex-direction:column;
+  }
+  .game-screen.show{display:flex}
+  .game-screen::before{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(circle at 20% 20%,rgba(255,184,108,.22),transparent 45%),
+               radial-gradient(circle at 80% 75%,rgba(255,143,163,.22),transparent 45%);
+  }
+  .game-header{
+    position:relative;z-index:10;padding:14px 24px;display:flex;align-items:center;
+    justify-content:space-between;gap:12px;flex-wrap:wrap;
+    background:rgba(255,255,255,.85);backdrop-filter:blur(8px);box-shadow:var(--shadow);
+  }
+  .game-header h2{
+    font-size:1.2rem;font-weight:800;letter-spacing:1px;
+    background:linear-gradient(120deg,var(--primary),var(--accent));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .game-back{
+    border:none;background:linear-gradient(120deg,var(--primary),var(--accent));
+    color:#fff;font-weight:600;padding:8px 18px;border-radius:999px;cursor:pointer;
+    transition:transform .2s;font-size:.9rem;
+  }
+  .game-back:hover{transform:scale(1.05)}
+  .game-info{display:flex;gap:18px;align-items:center;font-size:.88rem;color:var(--muted);flex-wrap:wrap}
+  .game-info b{color:var(--text);font-weight:700}
+  .game-hint,.game-shuffle,.game-zoom{
+    border:none;background:#fff;color:var(--primary);
+    padding:6px 14px;border-radius:999px;cursor:pointer;font-weight:600;font-size:.85rem;
+    box-shadow:inset 0 0 0 1px var(--primary);transition:transform .2s;
+  }
+  .game-hint:hover,.game-shuffle:hover,.game-zoom:hover{transform:scale(1.05)}
+  .game-wrap{
+    flex:1;display:flex;align-items:center;justify-content:center;padding:20px;
+    position:relative;z-index:1;overflow:auto;transition:padding .25s;
+  }
+  .game-wrap.with-lb{padding-left:420px}
+  @media(max-width:600px){.game-wrap.with-lb{padding-left:20px}}
+  .game-board{
+    position:relative;display:grid;gap:4px;padding:8px;--tile-size:62px;
+    background:rgba(255,255,255,.6);border-radius:14px;box-shadow:var(--shadow);
+  }
+  .tile{
+    position:relative;width:var(--tile-size,62px);height:var(--tile-size,62px);border-radius:8px;overflow:hidden;cursor:pointer;
+    background:#f0e6e0;border:2px solid transparent;
+    transition:transform .15s,border-color .15s,box-shadow .15s,width .15s,height .15s;
+  }
+  .tile img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+  .tile .num{
+    position:absolute;top:3px;left:3px;
+    background:rgba(0,0,0,.45);color:#fff;
+    font-size:.68rem;font-weight:700;line-height:1;
+    padding:2px 5px;border-radius:6px;pointer-events:none;
+    text-shadow:0 1px 2px rgba(0,0,0,.5);
+  }
+  .tile.empty .num{display:none}
+  .tile:hover{transform:scale(1.04)}
+  .tile.selected{
+    border-color:var(--primary);transform:scale(1.06);
+    box-shadow:0 0 0 3px rgba(255,143,163,.35);
+  }
+  .tile.empty{background:transparent;cursor:default;box-shadow:none;border-color:transparent}
+  .tile.empty img{display:none}
+  .tile.empty .tile-char{display:none}
+  .tile .tile-char{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:calc(var(--tile-size,62px) * .5);
+    font-weight:700;color:#fff;pointer-events:none;line-height:1;
+    text-shadow:0 2px 6px rgba(0,0,0,.35);
+  }
+  .tile.empty:hover{transform:none}
+  .tile.match{animation:tilePop .3s ease forwards}
+  @keyframes tilePop{0%{transform:scale(1.06)}100%{transform:scale(0);opacity:0}}
+  .game-canvas{position:absolute;inset:0;pointer-events:none;width:100%;height:100%}
+  .game-win{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;
+    align-items:center;justify-content:center;z-index:600;padding:20px}
+  .game-win.show{display:flex}
+  .game-win-box{
+    background:#fff;border-radius:var(--radius);padding:32px 28px;text-align:center;
+    width:360px;max-width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);
+  }
+  .game-win-icon{font-size:3rem;margin-bottom:6px}
+  .game-win h3{font-size:1.3rem;margin-bottom:8px;color:var(--text)}
+  .game-win p{color:var(--muted);margin-bottom:22px;font-size:.95rem}
+  .game-win .actions{display:flex;gap:10px;justify-content:center}
+  .game-win .actions button{
+    border:none;padding:9px 22px;border-radius:999px;cursor:pointer;
+    font-weight:600;font-size:.92rem;min-width:110px;
+  }
+  .game-win .actions .save{background:linear-gradient(120deg,var(--primary),var(--accent));color:#fff}
+  .game-win .actions .cancel{background:#f0e0e0;color:var(--text)}
+  /* 根级模态框需盖在 game-screen(500) 之上 */
+  #gameAlert{z-index:550}
+  /* 游戏内部面板（game-screen 层叠上下文内，只需高于棋盘/顶栏） */
+  #leaderboardModal{
+    position:absolute;top:0;left:0;bottom:0;width:400px;
+    background:rgba(255,255,255,.88);backdrop-filter:blur(8px);
+    box-shadow:8px 0 30px rgba(0,0,0,.12);
+    display:none;flex-direction:column;justify-content:flex-start;align-items:stretch;
+    z-index:10;border-radius:0;padding:0;
+    border-right:1px solid rgba(0,0,0,.08);
+  }
+  #leaderboardModal.show{display:flex}
+  #leaderboardModal .box{
+    width:auto;max-width:none;box-shadow:none;border-radius:0;
+    background:transparent;
+    padding:18px;flex:1;display:flex;flex-direction:column;
+  }
+  #leaderboardModal .lb-list{flex:1;max-height:none}
+  #leaderboardModal h3{padding-right:32px;margin-bottom:14px}
+  #leaderboardModal .lb-close{
+    position:absolute;top:10px;right:10px;width:28px;height:28px;
+    border:none;border-radius:50%;background:rgba(255,255,255,.8);
+    color:var(--text);font-size:1.2rem;line-height:1;cursor:pointer;
+    z-index:3;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 6px rgba(0,0,0,.15);transition:background .2s;
+  }
+  #leaderboardModal .lb-close:hover{background:#fff}
+  .lb-tabs{display:flex;gap:4px;margin:6px 0 10px;flex-wrap:wrap;justify-content:flex-start}
+  .lb-tab{
+    padding:4px 8px;font-size:.72rem;font-weight:600;
+    border:1px solid #e0d0d0;border-radius:6px;background:#fff;color:var(--muted);
+    cursor:pointer;transition:all .15s;white-space:nowrap;
+  }
+  .lb-tab:hover{border-color:var(--primary);color:var(--primary)}
+  .lb-tab.active{background:linear-gradient(120deg,var(--primary),var(--accent));color:#fff;border-color:transparent}
+  .lb-list{overflow:auto;margin:0;padding-right:4px}
+  .lb-table{width:100%;border-collapse:collapse;font-size:.85rem;table-layout:fixed}
+  .lb-table th{padding:8px 6px;text-align:center;color:#555;font-weight:700;font-size:.76rem;border-bottom:1px solid #d8d0d0;white-space:nowrap;background:rgba(255,255,255,.85)}
+  .lb-table td{padding:8px 6px;text-align:center;border-bottom:1px solid #e8e0e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+  .lb-table tbody tr:hover td{background:rgba(255,255,255,.85)}
+  .lb-table tbody tr.me td{background:#fff6f0}
+  .lb-table .col-rank{font-weight:700;color:var(--primary)}
+  .lb-table .r1{color:#e6a100}.lb-table .r2{color:#aaa}.lb-table .r3{color:#cd7f32}
+  .lb-table .col-time{font-weight:600;color:var(--text)}
+  .lb-table .col-score{font-weight:600;color:var(--text)}
+  .lb-table .col-diff{font-size:.74rem;font-weight:600}
+  .lb-table .col-diff[data-d="easy"]{color:#389e0d}
+  .lb-table .col-diff[data-d="normal"]{color:#d46b08}
+  .lb-table .col-diff[data-d="hard"]{color:#cf1322}
+  .lb-table .col-hints{font-size:.76rem;color:#555}
+  .lb-table .col-shuffles{font-size:.76rem;color:#555}
+  .lb-table .col-date{font-size:.72rem;color:#666;white-space:normal;line-height:1.25}
+  .lb-empty{display:block;text-align:left!important;color:var(--muted);padding:24px 8px;font-size:.88rem}
+  /* 游戏右下角说明面板 */
+  .game-help{
+    position:absolute;right:14px;bottom:14px;z-index:11;
+    max-width:268px;font-size:.82rem;pointer-events:auto;
+  }
+  .game-help .gh-toggle{
+    display:none;padding:6px 14px;border:1px solid var(--border);
+    border-radius:999px;background:rgba(255,255,255,.85);color:var(--text);
+    cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15);font-size:.82rem;
+  }
+  .game-help.collapsed .gh-toggle{display:inline-block}
+  .game-help.collapsed .gh-body{display:none}
+  .game-help .gh-body{
+    background:rgba(255,255,255,.95);
+    border:1px solid var(--border);border-radius:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,.18);overflow:hidden;
+  }
+  .game-help .gh-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 12px;border-bottom:1px solid var(--border);font-weight:600;
+  }
+  .game-help .gh-close{
+    border:none;background:none;font-size:1.1rem;line-height:1;
+    cursor:pointer;color:var(--muted);padding:0 4px;
+  }
+  .game-help .gh-close:hover{color:var(--text)}
+  .game-help .gh-section{padding:8px 12px}
+  .game-help .gh-section + .gh-section{border-top:1px solid var(--border)}
+  .game-help .gh-title{font-weight:600;color:var(--primary);margin-bottom:4px}
+  .game-help ul{margin:0;padding-left:18px;color:var(--muted)}
+  .game-help li{margin:3px 0;line-height:1.4}
+  @media(max-width:600px){
+    .game-info{gap:10px;font-size:.82rem}
+    #leaderboardModal{width:84%}
+  }
 </style>
 </head>
 <body>
@@ -247,19 +486,26 @@
   <button class="sec" id="shuffleBtn">重新散布</button>
   <button id="addBtn">添加照片</button>
   <button class="sec" id="screenshotBtn">截图</button>
+  <button id="gameBtn">游戏</button>
   <button class="sec" id="settingsBtn">设置</button>
 </div>
 
 <div class="help-panel" id="helpPanel">
-  <h4>操作说明 <span class="toggle" id="helpToggle">−</span></h4>
-  <ul>
-    <li><kbd>悬停</kbd> 照片停止跳动</li>
-    <li><kbd>拖动</kbd> 移动照片位置</li>
-    <li><kbd>滚轮</kbd> 放大缩小照片</li>
-    <li><kbd>单击</kbd> 查看大图并编辑</li>
-    <li><kbd>拖入</kbd> 图片自动添加</li>
-    <li><kbd>Esc</kbd> 关闭弹窗</li>
-  </ul>
+  <button class="help-toggle" id="helpToggle">操作说明</button>
+  <div class="help-body">
+    <div class="help-head">
+      <span class="title">操作说明</span>
+      <button class="help-close" id="helpClose">&times;</button>
+    </div>
+    <ul>
+      <li><kbd>悬停</kbd> 照片停止跳动</li>
+      <li><kbd>拖动</kbd> 移动照片位置</li>
+      <li><kbd>滚轮</kbd> 放大缩小照片</li>
+      <li><kbd>单击</kbd> 查看大图并编辑</li>
+      <li><kbd>拖入</kbd> 图片自动添加</li>
+      <li><kbd>Esc</kbd> 关闭弹窗</li>
+    </ul>
+  </div>
 </div>
 
 <!-- 新增/编辑弹窗 -->
@@ -318,6 +564,135 @@
     <div class="row"><span class="label">标题</span><div class="t" id="lbTitle" contenteditable="true" spellcheck="false" tabindex="0"></div></div>
     <div class="row"><span class="label">说明</span><div class="d" id="lbDesc" contenteditable="true" spellcheck="false" tabindex="0"></div></div>
     <button id="lbSaveBtn" class="lb-save">保存修改</button>
+  </div>
+</div>
+
+<!-- 连连看游戏界面 -->
+<div class="game-screen" id="gameScreen">
+  <div class="game-header">
+    <div style="display:flex;align-items:center;gap:14px">
+      <button class="game-back" id="gameBack">返回</button>
+      <h2>照片连连看</h2>
+    </div>
+    <div class="game-info">
+      <span>难度：<b id="gameDifficulty">普通</b></span>
+      <span>得分：<b id="gameScore">0</b></span>
+      <span>剩余：<b id="gameRemain">0</b></span>
+      <span>用时：<b id="gameTime">00:00</b></span>
+      <span>已提示：<b id="gameHints">0</b></span>
+      <span>已重排：<b id="gameShuffles">0</b></span>
+      <button class="game-hint" id="gameHint">提示</button>
+      <button class="game-shuffle" id="gameShuffle">重排</button>
+      <button class="game-zoom" id="zoomOutBtn">缩小</button>
+      <button class="game-zoom" id="zoomInBtn">放大</button>
+      <button class="game-zoom" id="lbBtn">排行榜</button>
+    </div>
+  </div>
+  <div class="game-wrap">
+    <div class="game-board" id="gameBoard">
+      <canvas class="game-canvas" id="gameCanvas"></canvas>
+    </div>
+    <!-- 排行榜左侧栏（absolute 覆盖，不挤 flex 布局） -->
+    <div class="modal" id="leaderboardModal">
+      <button class="lb-close" id="leaderboardClose" title="关闭">&times;</button>
+      <div class="box">
+        <h3>排行榜 · 前二十名</h3>
+        <div class="lb-tabs" id="lbTabs">
+          <button class="lb-tab active" data-diff="all">全部</button>
+          <button class="lb-tab" data-diff="easy">简单</button>
+          <button class="lb-tab" data-diff="normal">普通</button>
+          <button class="lb-tab" data-diff="hard">困难</button>
+        </div>
+        <div id="leaderboardList" class="lb-list"></div>
+      </div>
+    </div>
+  </div>
+  <!-- 右下角操作与规则说明 -->
+  <div class="game-help" id="gameHelp">
+    <button class="gh-toggle" id="ghToggle">规则说明</button>
+    <div class="gh-body">
+      <div class="gh-head">
+        <span>游戏说明</span>
+        <button class="gh-close" id="ghClose">&times;</button>
+      </div>
+      <div class="gh-section">
+        <div class="gh-title">操作</div>
+        <ul>
+          <li>点击两张序号相同的方块进行消除</li>
+          <li>提示：高亮一对可连方块（扣 5 分）</li>
+          <li>重排：打乱剩余方块，解开死局（扣 10 分）</li>
+          <li>缩小 / 放大：调整方块尺寸</li>
+          <li>Esc：退出游戏</li>
+        </ul>
+      </div>
+      <div class="gh-section">
+        <div class="gh-title">规则</div>
+        <ul>
+          <li>两张同序号方块，可用不超过 2 次拐弯的路径连通即可消除</li>
+          <li>路径可绕过棋盘外圈空白</li>
+          <li>全部消除即胜利</li>
+          <li>匹配一对 +10 分；消错 -1 分；提示 -5 分，重排 -10 分（总分可为负数）</li>
+          <li>用时越短、得分越高，排名越靠前</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <!-- 游戏大厅：无对局时显示，选择开始或继续 -->
+  <div class="game-lobby" id="gameLobby">
+    <div class="game-lobby-box">
+      <h2>照片连连看</h2>
+      <!-- 主视图 -->
+      <div class="lobby-main" id="lobbyMain">
+        <p>选择开始新游戏，或继续上一局未完成的对局</p>
+        <div class="actions">
+          <button class="lobby-start" id="startGameBtn">开始新游戏</button>
+          <button class="lobby-continue" id="continueGameBtn" style="display:none">继续上局</button>
+        </div>
+      </div>
+      <!-- 难度选择视图 -->
+      <div class="lobby-difficulty" id="lobbyDifficulty" style="display:none">
+        <p>选择难度</p>
+        <div class="diff-cards">
+          <button class="diff-card diff-easy" data-diff="easy">
+            <span class="diff-name">简单</span>
+            <span class="diff-meta">4×6 · 12对</span>
+          </button>
+          <button class="diff-card diff-normal" data-diff="normal">
+            <span class="diff-name">普通</span>
+            <span class="diff-meta">6×8 · 24对</span>
+          </button>
+          <button class="diff-card diff-hard" data-diff="hard">
+            <span class="diff-name">困难</span>
+            <span class="diff-meta">6×10 · 30对</span>
+          </button>
+        </div>
+        <button class="lobby-back" id="lobbyBackDiff">返回</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="game-win" id="gameWin">
+  <div class="game-win-box">
+    <div class="game-win-icon">🎉</div>
+    <h3>恭喜过关！</h3>
+    <p id="gameWinInfo">用时 00:00 · 得分 0</p>
+    <div class="actions">
+      <button class="cancel" id="gameWinBack">返回相册</button>
+      <button class="save" id="gameWinAgain">再玩一局</button>
+    </div>
+  </div>
+</div>
+
+<!-- 无可连通对提示 -->
+<div class="confirm-modal" id="gameAlert">
+  <div class="box">
+    <div class="icon" style="background:#fff4e5;color:#ffb86c">?</div>
+    <h3 id="gameAlertTitle">无可连接对</h3>
+    <p id="gameAlertText">当前剩余方块已无法连通，可重排后继续。</p>
+    <div class="actions">
+      <button class="cancel" id="gameAlertCancel">继续查看</button>
+      <button class="ok" id="gameAlertShuffle" style="background:linear-gradient(120deg,#ff8fa3,#ffb86c)">重排方块</button>
+    </div>
   </div>
 </div>
 
@@ -486,10 +861,11 @@ window.addEventListener('resize', scatter);
 // 操作说明折叠（状态保存到服务端）
 const helpPanel = document.getElementById('helpPanel');
 const helpToggle = document.getElementById('helpToggle');
+const helpClose = document.getElementById('helpClose');
 let saveConfigTimer = null;
 function applyHelpCollapsed(c){
-  if(c){ helpPanel.classList.add('collapsed'); helpToggle.textContent = '+'; }
-  else { helpPanel.classList.remove('collapsed'); helpToggle.textContent = '−'; }
+  if(c) helpPanel.classList.add('collapsed');
+  else helpPanel.classList.remove('collapsed');
 }
 function saveHelpCollapsed(c){
   clearTimeout(saveConfigTimer);
@@ -501,17 +877,21 @@ function saveHelpCollapsed(c){
     }).catch(()=>{});
   }, 300);
 }
-helpToggle.addEventListener('click', ()=>{
-  const collapsed = helpPanel.classList.toggle('collapsed');
-  helpToggle.textContent = collapsed ? '+' : '−';
-  saveHelpCollapsed(collapsed);
-});
+helpToggle.addEventListener('click', ()=>{ helpPanel.classList.remove('collapsed'); saveHelpCollapsed(false); });
+helpClose.addEventListener('click', ()=>{ helpPanel.classList.add('collapsed'); saveHelpCollapsed(true); });
 // 启动时读取保存的折叠状态
 fetch('/api/config').then(r=>r.json()).then(cfg=>{
   if(cfg.helpCollapsed !== undefined) applyHelpCollapsed(cfg.helpCollapsed);
   // 应用保存的网站标题/说明
   if(cfg.siteTitle) document.getElementById('siteTitle').textContent = cfg.siteTitle;
   if(cfg.siteDesc) document.getElementById('siteDesc').textContent = cfg.siteDesc;
+  // 应用保存的游戏方块尺寸
+  if(cfg.gameTileSize) gTileSize = cfg.gameTileSize;
+  // 应用保存的排行榜开合偏好（未设置默认打开）
+  gLbOpen = cfg.lbOpen !== false;
+  // 应用保存的规则说明折叠偏好（未设置默认展开）
+  if(cfg.ghCollapsed) document.getElementById('gameHelp').classList.add('collapsed');
+  // 游戏存档由 enterGameLobby 进入大厅时实时拉取，此处不再预读
 }).catch(()=>{});
 
 // ---------- 设置模态框 ----------
@@ -733,6 +1113,707 @@ document.addEventListener('drop', async e=>{
     await fetch(API, { method:'POST', body:fd });
   }
   await load();
+});
+
+// ---------- 连连看游戏 ----------
+const gameScreen = document.getElementById('gameScreen');
+const gameBoard = document.getElementById('gameBoard');
+const gameCanvas = document.getElementById('gameCanvas');
+const gameWin = document.getElementById('gameWin');
+const gameAlert = document.getElementById('gameAlert');
+let COLS = 8, ROWS = 6;  // 由难度选择动态设置
+// 难度预设（对数均不超过 ICON_CHARS 的 30 个，照片不足时用字符图标补齐）
+const DIFFICULTIES = {
+  easy:   { rows: 4, cols: 6,  label: '简单' },
+  normal: { rows: 6, cols: 8,  label: '普通' },
+  hard:   { rows: 6, cols: 10, label: '困难' }
+};
+// 照片不足时用于补齐配对的字符图标池（纯文字符号，非 emoji）
+const ICON_CHARS = ['★','♥','♦','♠','♣','♪','♫','☀','☂','✿','❀','❄','◆','◇','■','▲','●','◐','◑','◒','◓','◈','◎','⚡','✦','✧','✩','✪','⚑','✰'];
+function pairColor(pid){
+  const hue = (pid * 47) % 360;
+  return `hsl(${hue},65%,55%)`;
+}
+let gTiles = [];        // 二维数组：{photo, el, r, c, removed} 或 null
+let gSelected = null;   // 当前选中的 tile
+let gScore = 0, gRemain = 0, gStartTime = 0, gTimer = null, gLock = false;
+let gHints = 0, gShuffles = 0;
+let gTileSize = window.innerWidth <= 600 ? 42 : 62;
+let gLbOpen = true;
+let pendingResume = null;  // 大厅中从服务器拉取的待恢复对局（仅供「继续上局」按钮使用）
+let gLastDifficulty = 'normal';  // 上次选择的难度（用于「再玩一局」）
+function updateGameCounters(){
+  document.getElementById('gameHints').textContent = gHints;
+  document.getElementById('gameShuffles').textContent = gShuffles;
+}
+
+document.getElementById('gameBtn').addEventListener('click', enterGameLobby);
+document.getElementById('startGameBtn').addEventListener('click', ()=>{
+  // 进入难度选择视图
+  document.getElementById('lobbyMain').style.display = 'none';
+  document.getElementById('lobbyDifficulty').style.display = '';
+});
+document.getElementById('lobbyBackDiff').addEventListener('click', ()=>{
+  document.getElementById('lobbyDifficulty').style.display = 'none';
+  document.getElementById('lobbyMain').style.display = '';
+});
+document.querySelectorAll('.diff-card').forEach(btn => {
+  btn.addEventListener('click', ()=>{ startGame(btn.dataset.diff); });
+});
+document.getElementById('continueGameBtn').addEventListener('click', ()=>{
+  if(pendingResume) restoreGame(pendingResume);
+});
+
+// 进入游戏界面的大厅：从服务器拉取最新存档，决定是否显示「继续上局」
+async function enterGameLobby(){
+  gameScreen.classList.add('show', 'lobby');
+  // 重置到主视图
+  document.getElementById('lobbyMain').style.display = '';
+  document.getElementById('lobbyDifficulty').style.display = 'none';
+  const contBtn = document.getElementById('continueGameBtn');
+  contBtn.style.display = 'none';
+  pendingResume = null;
+  try{
+    const cfg = await fetch('/api/config').then(r=>r.json());
+    if(cfg.gameState && cfg.gameState.tiles && cfg.gameState.remain > 0){
+      pendingResume = cfg.gameState;
+      contBtn.style.display = '';
+    }
+  }catch(e){ /* 拉取失败则不显示继续按钮 */ }
+}
+
+function startGame(difficulty){
+  // 按难度设置棋盘尺寸（默认普通）
+  const d = DIFFICULTIES[difficulty] || DIFFICULTIES.normal;
+  ROWS = d.rows; COLS = d.cols;
+  gLastDifficulty = difficulty || 'normal';
+  document.getElementById('gameDifficulty').textContent = d.label;
+  gameScreen.classList.add('show');
+  gameScreen.classList.remove('lobby');
+  const total = ROWS * COLS;
+  const pairs = total / 2;
+  const list = [];
+  const photoPairs = Math.min(photos.length, pairs);
+  for(let i=0;i<photoPairs;i++){
+    const p = photos[i];
+    list.push({photo:p, pairId:i, icon:null});
+    list.push({photo:p, pairId:i, icon:null});
+  }
+  for(let i=photoPairs;i<pairs;i++){
+    const ch = ICON_CHARS[(i - photoPairs) % ICON_CHARS.length];
+    list.push({photo:null, pairId:i, icon:ch});
+    list.push({photo:null, pairId:i, icon:ch});
+  }
+  // 洗牌
+  for(let i=list.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [list[i],list[j]] = [list[j],list[i]];
+  }
+  // 渲染棋盘
+  gTiles = [];
+  gameBoard.style.gridTemplateColumns = `repeat(${COLS}, auto)`;
+  // 保留 canvas，移除旧 tile
+  [...gameBoard.querySelectorAll('.tile')].forEach(el => el.remove());
+  let idx = 0;
+  for(let r=0;r<ROWS;r++){
+    const row = [];
+    for(let c=0;c<COLS;c++){
+      const item = list[idx++];
+      const el = document.createElement('div');
+      el.className = 'tile';
+      const num = `<span class="num">${item.pairId + 1}</span>`;
+      if(item.photo){
+        el.innerHTML = `<img src="/${item.photo.src}" alt="${item.photo.title}">${num}`;
+      } else {
+        el.innerHTML = `<div class="tile-char" style="background:${pairColor(item.pairId)}">${item.icon}</div>${num}`;
+      }
+      el.addEventListener('click', ()=>onTileClick(r,c));
+      gameBoard.appendChild(el);
+      row.push({photo:item.photo, pairId:item.pairId, icon:item.icon, el, r, c, removed:false});
+    }
+    gTiles.push(row);
+  }
+  gSelected = null;
+  gScore = 0;
+  gHints = 0;
+  gShuffles = 0;
+  gRemain = total;
+  gLock = false;
+  document.getElementById('gameScore').textContent = 0;
+  document.getElementById('gameRemain').textContent = total;
+  updateGameCounters();
+  gStartTime = Date.now();
+  if(gTimer) clearInterval(gTimer);
+  gTimer = setInterval(updateTime, 1000);
+  updateTime();
+  gameScreen.classList.add('show');
+  // 按记忆的偏好决定是否打开排行榜侧栏
+  if(gLbOpen) openLeaderboard();
+  // 应用已记忆的方块尺寸，并刷新画布
+  setTileSize(gTileSize);
+  // 若初始布局已无可连通对，自动重排
+  if(!hasConnectablePair()) shuffleRemaining();
+  // 立即保存初始局面（点返回时也有快照可继续）
+  saveGameStateNow();
+  // 滚动到棋盘居中
+  requestAnimationFrame(()=>{
+    gameBoard.scrollIntoView({block:'center', inline:'center'});
+  });
+}
+
+function resizeGameCanvas(){
+  const w = gameBoard.clientWidth, h = gameBoard.clientHeight;
+  const dpr = window.devicePixelRatio || 1;
+  gameCanvas.style.width = w + 'px';
+  gameCanvas.style.height = h + 'px';
+  gameCanvas.width = w * dpr;
+  gameCanvas.height = h * dpr;
+  const ctx = gameCanvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', ()=>{ if(gameScreen.classList.contains('show')) resizeGameCanvas(); });
+
+// 方块尺寸缩放（同步记忆到服务端）
+let saveTileSizeTimer = null;
+function setTileSize(sz){
+  gTileSize = Math.max(36, Math.min(120, sz));
+  gameBoard.style.setProperty('--tile-size', gTileSize + 'px');
+  requestAnimationFrame(resizeGameCanvas);
+  // 防抖保存
+  clearTimeout(saveTileSizeTimer);
+  saveTileSizeTimer = setTimeout(()=>{
+    fetch('/api/config', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ gameTileSize: gTileSize })
+    }).catch(()=>{});
+  }, 300);
+}
+document.getElementById('zoomInBtn').addEventListener('click', ()=> setTileSize(gTileSize + 10));
+document.getElementById('zoomOutBtn').addEventListener('click', ()=> setTileSize(gTileSize - 10));
+
+function updateTime(){
+  const s = Math.floor((Date.now() - gStartTime)/1000);
+  const mm = String(Math.floor(s/60)).padStart(2,'0');
+  const ss = String(s%60).padStart(2,'0');
+  document.getElementById('gameTime').textContent = `${mm}:${ss}`;
+}
+
+// ---------- 游戏状态持久化（继续上局） ----------
+let saveGameStateTimer = null;
+function serializeGameState(){
+  if(!gTiles || !gTiles.length) return null;
+  return {
+    tiles: gTiles.map(row => row.map(t => t ? {
+      pairId: t.pairId,
+      photo: t.photo ? {src: t.photo.src, title: t.photo.title} : null,
+      icon: t.icon,
+      removed: t.removed
+    } : null)),
+    score: gScore,
+    hints: gHints,
+    shuffles: gShuffles,
+    remain: gRemain,
+    elapsed: Math.floor((Date.now() - gStartTime)/1000),
+    difficulty: gLastDifficulty
+  };
+}
+function postGameState(state){
+  fetch('/api/config', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ gameState: state })
+  }).catch(()=>{});
+}
+function saveGameState(){
+  if(!gTiles || !gTiles.length || gRemain <= 0) return;
+  clearTimeout(saveGameStateTimer);
+  saveGameStateTimer = setTimeout(()=> postGameState(serializeGameState()), 500);
+}
+function saveGameStateNow(){
+  if(!gTiles || !gTiles.length || gRemain <= 0) return;
+  clearTimeout(saveGameStateTimer);
+  postGameState(serializeGameState());
+}
+function clearGameState(){
+  clearTimeout(saveGameStateTimer);
+  postGameState(null);
+}
+function restoreGame(state){
+  // 从存档恢复棋盘尺寸与难度
+  ROWS = state.tiles.length;
+  COLS = state.tiles[0] ? state.tiles[0].length : 8;
+  if(state.difficulty && DIFFICULTIES[state.difficulty]) gLastDifficulty = state.difficulty;
+  document.getElementById('gameDifficulty').textContent = (DIFFICULTIES[gLastDifficulty] || DIFFICULTIES.normal).label;
+  gTiles = [];
+  gameBoard.style.gridTemplateColumns = `repeat(${COLS}, auto)`;
+  [...gameBoard.querySelectorAll('.tile')].forEach(el => el.remove());
+  for(let r=0;r<ROWS;r++){
+    const row = [];
+    for(let c=0;c<COLS;c++){
+      const saved = state.tiles[r] && state.tiles[r][c];
+      const el = document.createElement('div');
+      el.className = 'tile';
+      if(saved){
+        const num = `<span class="num">${saved.pairId + 1}</span>`;
+        if(saved.photo){
+          el.innerHTML = `<img src="/${saved.photo.src}" alt="${saved.photo.title || ''}">${num}`;
+        } else {
+          el.innerHTML = `<div class="tile-char" style="background:${pairColor(saved.pairId)}">${saved.icon}</div>${num}`;
+        }
+        if(saved.removed) el.classList.add('empty');
+      } else {
+        el.classList.add('empty');
+      }
+      el.addEventListener('click', ()=>onTileClick(r,c));
+      gameBoard.appendChild(el);
+      row.push(saved ? {
+        photo: saved.photo, pairId: saved.pairId, icon: saved.icon,
+        el, r, c, removed: !!saved.removed
+      } : null);
+    }
+    gTiles.push(row);
+  }
+  gSelected = null;
+  gScore = state.score || 0;
+  gHints = state.hints || 0;
+  gShuffles = state.shuffles || 0;
+  gRemain = state.remain != null ? state.remain : (ROWS*COLS);
+  gLock = false;
+  document.getElementById('gameScore').textContent = gScore;
+  document.getElementById('gameRemain').textContent = gRemain;
+  updateGameCounters();
+  gStartTime = Date.now() - (state.elapsed || 0) * 1000;
+  if(gTimer) clearInterval(gTimer);
+  gTimer = setInterval(updateTime, 1000);
+  updateTime();
+  gameScreen.classList.add('show');
+  gameScreen.classList.remove('lobby');
+  pendingResume = null;
+  if(gLbOpen) openLeaderboard();
+  setTileSize(gTileSize);
+  if(gRemain > 0 && !hasConnectablePair()) showGameAlert();
+  requestAnimationFrame(()=>{
+    gameBoard.scrollIntoView({block:'center', inline:'center'});
+  });
+}
+function onTileClick(r, c){
+  if(gLock) return;
+  const t = gTiles[r] && gTiles[r][c];
+  if(!t || t.removed) return;
+  if(!gSelected){
+    gSelected = t;
+    t.el.classList.add('selected');
+    return;
+  }
+  if(gSelected === t){
+    t.el.classList.remove('selected');
+    gSelected = null;
+    return;
+  }
+  if(gSelected.pairId !== t.pairId){
+    // 不同配对（序号不同）：换选
+    gSelected.el.classList.remove('selected');
+    gSelected = t;
+    t.el.classList.add('selected');
+    return;
+  }
+  // 同配对：检查连通路径
+  const path = findPath(gSelected, t);
+  if(path){
+    gLock = true;
+    drawPath(path);
+    const a = gSelected, b = t;
+    gSelected = null;
+    a.el.classList.remove('selected');
+    b.el.classList.remove('selected');
+    a.el.classList.add('match');
+    b.el.classList.add('match');
+    setTimeout(()=>{
+      a.el.classList.remove('match');
+      b.el.classList.remove('match');
+      a.el.classList.add('empty');
+      b.el.classList.add('empty');
+      a.removed = true; b.removed = true;
+      gRemain -= 2;
+      gScore += 10;
+      document.getElementById('gameScore').textContent = gScore;
+      document.getElementById('gameRemain').textContent = gRemain;
+      clearCanvas();
+      gLock = false;
+      if(gRemain === 0) winGame();
+      else if(!hasConnectablePair()) showGameAlert();
+      saveGameState();
+    }, 300);
+  } else {
+    // 无路径：消错扣 1 分，换选
+    gScore -= 1;
+    document.getElementById('gameScore').textContent = gScore;
+    gSelected.el.classList.remove('selected');
+    gSelected = t;
+    t.el.classList.add('selected');
+    // 消错只是换选 + 扣 1 分，不算重大状态变化，等后续匹配/提示/重排/退出再存
+  }
+}
+
+// 连通路径搜索：扩展网格 + 外圈空白，最多 2 次拐弯
+function findPath(a, b){
+  const ER = ROWS + 2, EC = COLS + 2;
+  const blocked = Array.from({length:ER},()=>Array(EC).fill(false));
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const t = gTiles[r][c];
+    blocked[r+1][c+1] = !!(t && !t.removed);
+  }
+  const ar = a.r+1, ac = a.c+1, br = b.r+1, bc = b.c+1;
+  blocked[ar][ac] = false;  // 起点可通行
+  // 不清空终点，靠 isTarget 判定
+  const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+  const visited = new Map();  // key: r,c,dir -> min turns
+  visited.set(`${ar},${ac},-1`, 0);
+  const queue = [{r:ar, c:ac, dir:-1, turns:0, path:[[ar,ac]]}];
+  while(queue.length){
+    const cur = queue.shift();
+    for(let d=0; d<4; d++){
+      const nr = cur.r + dirs[d][0], nc = cur.c + dirs[d][1];
+      if(nr<0||nr>=ER||nc<0||nc>=EC) continue;
+      const isTarget = (nr===br && nc===bc);
+      if(!isTarget && blocked[nr][nc]) continue;
+      let newTurns = cur.turns;
+      if(cur.dir !== -1 && d !== cur.dir) newTurns++;
+      if(newTurns > 2) continue;
+      if(isTarget) return [...cur.path, [nr,nc]];
+      const key = `${nr},${nc},${d}`;
+      if(visited.has(key) && visited.get(key) <= newTurns) continue;
+      visited.set(key, newTurns);
+      queue.push({r:nr, c:nc, dir:d, turns:newTurns, path:[...cur.path, [nr,nc]]});
+    }
+  }
+  return null;
+}
+
+// 将扩展网格坐标转换为画布像素中心
+function cellCenter(R, C){
+  let x, y;
+  if(C === 0) x = 0;
+  else if(C === COLS+1) x = gameBoard.clientWidth;
+  else {
+    const ref = gTiles[0][C-1].el;
+    x = ref.offsetLeft + ref.offsetWidth/2;
+  }
+  if(R === 0) y = 0;
+  else if(R === ROWS+1) y = gameBoard.clientHeight;
+  else {
+    const ref = gTiles[R-1][0].el;
+    y = ref.offsetTop + ref.offsetHeight/2;
+  }
+  return [x, y];
+}
+
+function drawPath(path){
+  const ctx = gameCanvas.getContext('2d');
+  clearCanvas();
+  ctx.strokeStyle = '#ff8fa3';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = 'rgba(255,143,163,.5)';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  path.forEach((p, i)=>{
+    const [x, y] = cellCenter(p[0], p[1]);
+    if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+}
+
+function clearCanvas(){
+  const ctx = gameCanvas.getContext('2d');
+  ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+}
+
+// 是否存在可连通的同配对方块
+function hasConnectablePair(){
+  const remain = [];
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const t = gTiles[r][c];
+    if(t && !t.removed) remain.push(t);
+  }
+  for(let i=0;i<remain.length;i++){
+    for(let j=i+1;j<remain.length;j++){
+      if(remain[i].pairId === remain[j].pairId && findPath(remain[i], remain[j])) return true;
+    }
+  }
+  return false;
+}
+
+// 无可连通对提示模态框
+function showGameAlert(){
+  document.getElementById('gameAlertTitle').textContent = '无可连接对';
+  document.getElementById('gameAlertText').textContent = '当前剩余方块已无法连通，点击「重排方块」即可继续游戏。';
+  gameAlert.classList.add('show');
+}
+document.getElementById('gameAlertCancel').addEventListener('click', ()=> gameAlert.classList.remove('show'));
+document.getElementById('gameAlertShuffle').addEventListener('click', ()=>{
+  gameAlert.classList.remove('show');
+  gShuffles++;
+  gScore -= 10;
+  document.getElementById('gameScore').textContent = gScore;
+  updateGameCounters();
+  shuffleRemaining();
+  saveGameState();
+});
+gameAlert.addEventListener('click', e=>{ if(e.target===gameAlert) gameAlert.classList.remove('show'); });
+
+// ---------- 排行榜 ----------
+const leaderboardModal = document.getElementById('leaderboardModal');
+const leaderboardList = document.getElementById('leaderboardList');
+
+function formatTime(sec){
+  const m = Math.floor(sec/60), s = sec % 60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+function formatDate(iso){
+  const d = new Date(iso);
+  if(isNaN(d)) return '';
+  const Y = d.getFullYear();
+  const M = String(d.getMonth()+1).padStart(2,'0');
+  const D = String(d.getDate()).padStart(2,'0');
+  const h = String(d.getHours()).padStart(2,'0');
+  const m = String(d.getMinutes()).padStart(2,'0');
+  const s = String(d.getSeconds()).padStart(2,'0');
+  return `${Y}-${M}-${D}<br>${h}:${m}:${s}`;
+}
+let lbFilterDiff = 'all';
+function renderLeaderboard(list, highlightDate){
+  // 按当前难度筛选
+  const filtered = lbFilterDiff === 'all' ? list : list.filter(r => (r.difficulty || 'normal') === lbFilterDiff);
+  if(!filtered.length){
+    leaderboardList.innerHTML = `<div class="lb-empty">${lbFilterDiff === 'all' ? '暂无记录，快来挑战第一名！' : '该难度暂无记录'}</div>`;
+    return;
+  }
+  const medal = ['r1','r2','r3'];
+  const rows = list.map((r, i) => {
+    const rankCls = i < 3 ? medal[i] : '';
+    const meCls = (highlightDate && r.date === highlightDate) ? ' class="me"' : '';
+    const hints = r.hints ?? 0;
+    const shuffles = r.shuffles ?? 0;
+    const diffKey = r.difficulty || 'normal';
+    const diff = (DIFFICULTIES[diffKey] || DIFFICULTIES.normal).label;
+    return `<tr${meCls}>
+      <td class="col-rank ${rankCls}">${i+1}</td>
+      <td class="col-time">${formatTime(r.time)}</td>
+      <td class="col-score">${r.score}</td>
+      <td class="col-diff" data-d="${diffKey}">${diff}</td>
+      <td class="col-hints">${hints}</td>
+      <td class="col-shuffles">${shuffles}</td>
+      <td class="col-date">${formatDate(r.date)}</td>
+    </tr>`;
+  }).join('');
+  leaderboardList.innerHTML = `
+    <table class="lb-table">
+      <colgroup>
+        <col style="width:20px"><col style="width:52px"><col style="width:36px"><col style="width:50px"><col style="width:26px"><col style="width:26px"><col style="width:100px">
+      </colgroup>
+      <thead><tr>
+        <th>#</th><th>用时</th><th>得分</th><th>难度</th><th>提示</th><th>重排</th><th>时间</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+// 排行榜开合状态记忆到服务端
+let saveLbStateTimer = null;
+function saveLbState(){
+  clearTimeout(saveLbStateTimer);
+  saveLbStateTimer = setTimeout(()=>{
+    fetch('/api/config', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ lbOpen: gLbOpen })
+    }).catch(()=>{});
+  }, 300);
+}
+const gameWrap = document.querySelector('.game-wrap');
+function syncLbSpace(){
+  gameWrap.classList.toggle('with-lb', leaderboardModal.classList.contains('show'));
+}
+// 用户主动打开（持久化偏好）
+function showLeaderboard(){
+  openLeaderboard();
+  gLbOpen = true;
+  saveLbState();
+}
+// 用户主动关闭（持久化偏好）
+function closeLeaderboard(){
+  leaderboardModal.classList.remove('show');
+  syncLbSpace();
+  gLbOpen = false;
+  saveLbState();
+}
+// 点击排行榜按钮切换开合
+function toggleLeaderboard(){
+  if(leaderboardModal.classList.contains('show')) closeLeaderboard();
+  else showLeaderboard();
+}
+let lbRawList = [];  // 缓存排行榜原始列表（筛选标签页切换时无需重新拉取）
+async function openLeaderboard(highlightDate){
+  lbRawList = await fetch('/api/leaderboard').then(r=>r.json()).catch(()=>[]);
+  renderLeaderboard(lbRawList, highlightDate);
+  leaderboardModal.classList.add('show');
+  syncLbSpace();
+}
+document.getElementById('lbBtn').addEventListener('click', toggleLeaderboard);
+document.getElementById('leaderboardClose').addEventListener('click', closeLeaderboard);
+// 难度标签页切换
+document.querySelectorAll('.lb-tab').forEach(tab => {
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    lbFilterDiff = tab.dataset.diff;
+    renderLeaderboard(lbRawList);
+  });
+});
+
+async function winGame(){
+  if(gTimer){ clearInterval(gTimer); gTimer = null; }
+  clearGameState();   // 通关后清空服务器存档，下次进入大厅不再显示「继续上局」
+  const sec = Math.floor((Date.now() - gStartTime)/1000);
+  document.getElementById('gameWinInfo').textContent = `用时 ${formatTime(sec)} · 得分 ${gScore}`;
+  gameWin.classList.add('show');
+  // 提交成绩到服务端排行榜
+  let highlightDate = null;
+  try{
+    const r = await fetch('/api/leaderboard', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ time: sec, score: gScore, hints: gHints, shuffles: gShuffles, difficulty: gLastDifficulty })
+    });
+    const data = await r.json();
+    if(data && data.record) highlightDate = data.record.date;
+  }catch(e){}
+  // 自动打开排行榜，高亮本次成绩
+  openLeaderboard(highlightDate);
+}
+
+document.getElementById('gameBack').addEventListener('click', exitGame);
+function exitGame(){
+  // 退出时立即保存当前局面（未完成则下次进大厅可继续，通关则 gRemain=0 不保存）
+  saveGameStateNow();
+  gameScreen.classList.remove('show', 'lobby');
+  gameWin.classList.remove('show');
+  leaderboardModal.classList.remove('show');
+  gameWrap.classList.remove('with-lb');
+  if(gTimer){ clearInterval(gTimer); gTimer = null; }
+  gSelected = null; gLock = false;
+}
+document.getElementById('gameWinBack').addEventListener('click', exitGame);
+document.getElementById('gameWinAgain').addEventListener('click', ()=>{
+  gameWin.classList.remove('show');
+  startGame(gLastDifficulty);
+});
+
+// 提示：找一对可连接的同图方块
+document.getElementById('gameHint').addEventListener('click', ()=>{
+  if(gLock) return;
+  const remain = [];
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const t = gTiles[r][c];
+    if(t && !t.removed) remain.push(t);
+  }
+  for(let i=0;i<remain.length;i++){
+    for(let j=i+1;j<remain.length;j++){
+      if(remain[i].pairId === remain[j].pairId){
+        if(findPath(remain[i], remain[j])){
+          gHints++;
+          gScore -= 5;
+          document.getElementById('gameScore').textContent = gScore;
+          updateGameCounters();
+          saveGameState();
+          if(gSelected && gSelected !== remain[i] && gSelected !== remain[j]){
+            gSelected.el.classList.remove('selected');
+            gSelected = null;
+          }
+          remain[i].el.classList.add('selected');
+          remain[j].el.classList.add('selected');
+          setTimeout(()=>{
+            remain[i].el.classList.remove('selected');
+            remain[j].el.classList.remove('selected');
+          }, 1500);
+          return;
+        }
+      }
+    }
+  }
+  showGameAlert();
+});
+
+// 重排：把 pairId（连同图片与序号）在剩余位置间重新分配，使连通关系发生变化
+function shuffleRemaining(){
+  if(gLock) return;
+  const positions = [];
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const t = gTiles[r][c];
+    if(t && !t.removed) positions.push(t);
+  }
+  if(positions.length === 0) return;
+  // pairId -> 该配对所用的图片或字符图标
+  const pairData = new Map();
+  positions.forEach(t => { if(!pairData.has(t.pairId)) pairData.set(t.pairId, {photo:t.photo, icon:t.icon}); });
+  const basePairIds = positions.map(t => t.pairId);
+  const applyShuffle = ()=>{
+    const pairIds = [...basePairIds];
+    for(let i=pairIds.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [pairIds[i],pairIds[j]] = [pairIds[j],pairIds[i]];
+    }
+    positions.forEach((t, k)=>{
+      const pid = pairIds[k];
+      const data = pairData.get(pid);
+      t.pairId = pid;
+      t.photo = data.photo;
+      t.icon = data.icon;
+      const num = `<span class="num">${pid + 1}</span>`;
+      if(data.photo){
+        t.el.innerHTML = `<img src="/${data.photo.src}" alt="${data.photo.title}">${num}`;
+      } else {
+        t.el.innerHTML = `<div class="tile-char" style="background:${pairColor(pid)}">${data.icon}</div>${num}`;
+      }
+    });
+  };
+  // 多次尝试直到出现可连通对（避免重排后仍死局）
+  let attempts = 0;
+  do { applyShuffle(); attempts++; }
+  while(attempts < 20 && !hasConnectablePair());
+  if(gSelected){ gSelected.el.classList.remove('selected'); gSelected = null; }
+}
+document.getElementById('gameShuffle').addEventListener('click', ()=>{ gShuffles++; gScore -= 10; document.getElementById('gameScore').textContent = gScore; updateGameCounters(); shuffleRemaining(); saveGameState(); });
+
+// 页面隐藏时立即保存对局（防止关标签页丢失进度）
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden) saveGameStateNow();
+});
+
+// 右下角说明面板开合（状态记忆到服务端）
+let saveHelpStateTimer = null;
+function saveHelpState(){
+  clearTimeout(saveHelpStateTimer);
+  saveHelpStateTimer = setTimeout(()=>{
+    fetch('/api/config', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ ghCollapsed: document.getElementById('gameHelp').classList.contains('collapsed') })
+    }).catch(()=>{});
+  }, 300);
+}
+document.getElementById('ghToggle').addEventListener('click', ()=>{ document.getElementById('gameHelp').classList.remove('collapsed'); saveHelpState(); });
+document.getElementById('ghClose').addEventListener('click', ()=>{ document.getElementById('gameHelp').classList.add('collapsed'); saveHelpState(); });
+
+// Esc：先关提示框，再退出游戏界面
+document.addEventListener('keydown', e=>{
+  if(e.key !== 'Escape') return;
+  if(gameAlert.classList.contains('show')){ gameAlert.classList.remove('show'); return; }
+  if(leaderboardModal.classList.contains('show')){ closeLeaderboard(); return; }
+  if(gameWin.classList.contains('show')) return;
+  if(gameScreen.classList.contains('show')) exitGame();
 });
 </script>
 </body>
