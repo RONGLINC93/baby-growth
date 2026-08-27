@@ -312,12 +312,12 @@
   .game-back:hover{transform:scale(1.05)}
   .game-info{display:flex;gap:18px;align-items:center;font-size:.88rem;color:var(--muted);flex-wrap:wrap}
   .game-info b{color:var(--text);font-weight:700}
-  .game-hint,.game-shuffle,.game-zoom{
+  .game-hint,.game-shuffle,.game-zoom,.game-lb,.game-new{
     border:none;background:#fff;color:var(--primary);
     padding:6px 14px;border-radius:999px;cursor:pointer;font-weight:600;font-size:.85rem;
     box-shadow:inset 0 0 0 1px var(--primary);transition:transform .2s;
   }
-  .game-hint:hover,.game-shuffle:hover,.game-zoom:hover{transform:scale(1.05)}
+  .game-hint:hover,.game-shuffle:hover,.game-zoom:hover,.game-lb:hover,.game-new:hover{transform:scale(1.05)}
   .game-wrap{
     flex:1;display:flex;align-items:center;justify-content:center;padding:20px;
     position:relative;z-index:1;overflow:auto;transition:padding .25s;
@@ -380,13 +380,14 @@
   .game-win .actions .cancel{background:#f0e0e0;color:var(--text)}
   /* 根级模态框需盖在 game-screen(500) 之上 */
   #gameAlert{z-index:550}
-  /* 游戏内部面板（game-screen 层叠上下文内，只需高于棋盘/顶栏） */
+  #newGameConfirm{z-index:550}
+  /* 游戏内部面板（game-screen 层叠上下文内，需高于大厅遮罩但低于顶栏；top 由 JS 按顶栏高度动态设置） */
   #leaderboardModal{
     position:absolute;top:0;left:0;bottom:0;width:400px;
     background:rgba(255,255,255,.88);backdrop-filter:blur(8px);
     box-shadow:8px 0 30px rgba(0,0,0,.12);
     display:none;flex-direction:column;justify-content:flex-start;align-items:stretch;
-    z-index:10;border-radius:0;padding:0;
+    z-index:9;border-radius:0;padding:0;
     border-right:1px solid rgba(0,0,0,.08);
   }
   #leaderboardModal.show{display:flex}
@@ -573,6 +574,7 @@
     <div style="display:flex;align-items:center;gap:14px">
       <button class="game-back" id="gameBack">返回</button>
       <h2>照片连连看</h2>
+      <button class="game-lb" id="lbBtn">排行榜</button>
     </div>
     <div class="game-info">
       <span>难度：<b id="gameDifficulty">普通</b></span>
@@ -585,26 +587,12 @@
       <button class="game-shuffle" id="gameShuffle">重排</button>
       <button class="game-zoom" id="zoomOutBtn">缩小</button>
       <button class="game-zoom" id="zoomInBtn">放大</button>
-      <button class="game-zoom" id="lbBtn">排行榜</button>
+      <button class="game-new" id="newGameBtn">开始新游戏</button>
     </div>
   </div>
   <div class="game-wrap">
     <div class="game-board" id="gameBoard">
       <canvas class="game-canvas" id="gameCanvas"></canvas>
-    </div>
-    <!-- 排行榜左侧栏（absolute 覆盖，不挤 flex 布局） -->
-    <div class="modal" id="leaderboardModal">
-      <button class="lb-close" id="leaderboardClose" title="关闭">&times;</button>
-      <div class="box">
-        <h3>排行榜 · 前二十名</h3>
-        <div class="lb-tabs" id="lbTabs">
-          <button class="lb-tab active" data-diff="all">全部</button>
-          <button class="lb-tab" data-diff="easy">简单</button>
-          <button class="lb-tab" data-diff="normal">普通</button>
-          <button class="lb-tab" data-diff="hard">困难</button>
-        </div>
-        <div id="leaderboardList" class="lb-list"></div>
-      </div>
     </div>
   </div>
   <!-- 右下角操作与规则说明 -->
@@ -635,6 +623,20 @@
           <li>用时越短、得分越高，排名越靠前</li>
         </ul>
       </div>
+    </div>
+  </div>
+  <!-- 排行榜左侧栏（挂在 game-screen 下，游戏大厅与对局中均可显示） -->
+  <div class="modal" id="leaderboardModal">
+    <button class="lb-close" id="leaderboardClose" title="关闭">&times;</button>
+    <div class="box">
+      <h3>排行榜 · 前二十名</h3>
+      <div class="lb-tabs" id="lbTabs">
+        <button class="lb-tab active" data-diff="all">全部</button>
+        <button class="lb-tab" data-diff="easy">简单</button>
+        <button class="lb-tab" data-diff="normal">普通</button>
+        <button class="lb-tab" data-diff="hard">困难</button>
+      </div>
+      <div id="leaderboardList" class="lb-list"></div>
     </div>
   </div>
   <!-- 游戏大厅：无对局时显示，选择开始或继续 -->
@@ -692,6 +694,19 @@
     <div class="actions">
       <button class="cancel" id="gameAlertCancel">继续查看</button>
       <button class="ok" id="gameAlertShuffle" style="background:linear-gradient(120deg,#ff8fa3,#ffb86c)">重排方块</button>
+    </div>
+  </div>
+</div>
+
+<!-- 游戏中开始新对局确认 -->
+<div class="confirm-modal" id="newGameConfirm">
+  <div class="box">
+    <div class="icon">⚠</div>
+    <h3>开始新游戏？</h3>
+    <p>将结束当前对局并重新选择难度，当前进度会自动保存，之后可通过「继续上局」恢复。</p>
+    <div class="actions">
+      <button class="cancel" id="newGameCancel">取消</button>
+      <button class="ok" id="newGameOk" style="background:linear-gradient(120deg,#ff8fa3,#ffb86c)">开始新对局</button>
     </div>
   </div>
 </div>
@@ -891,6 +906,8 @@ fetch('/api/config').then(r=>r.json()).then(cfg=>{
   gLbOpen = cfg.lbOpen !== false;
   // 应用保存的规则说明折叠偏好（未设置默认展开）
   if(cfg.ghCollapsed) document.getElementById('gameHelp').classList.add('collapsed');
+  // 应用保存的排行榜难度筛选（未设置默认全部；setLbFilter 内做合法性校验）
+  if(cfg.lbFilterDiff !== undefined) setLbFilter(cfg.lbFilterDiff);
   // 游戏存档由 enterGameLobby 进入大厅时实时拉取，此处不再预读
 }).catch(()=>{});
 
@@ -1121,6 +1138,7 @@ const gameBoard = document.getElementById('gameBoard');
 const gameCanvas = document.getElementById('gameCanvas');
 const gameWin = document.getElementById('gameWin');
 const gameAlert = document.getElementById('gameAlert');
+const newGameConfirm = document.getElementById('newGameConfirm');
 let COLS = 8, ROWS = 6;  // 由难度选择动态设置
 // 难度预设（对数均不超过 ICON_CHARS 的 30 个，照片不足时用字符图标补齐）
 const DIFFICULTIES = {
@@ -1160,6 +1178,29 @@ document.getElementById('lobbyBackDiff').addEventListener('click', ()=>{
 document.querySelectorAll('.diff-card').forEach(btn => {
   btn.addEventListener('click', ()=>{ startGame(btn.dataset.diff); });
 });
+// 游戏中「开始新游戏」：先弹确认模态框
+document.getElementById('newGameBtn').addEventListener('click', ()=>{
+  newGameConfirm.classList.add('show');
+});
+document.getElementById('newGameCancel').addEventListener('click', ()=> newGameConfirm.classList.remove('show'));
+document.getElementById('newGameOk').addEventListener('click', async ()=>{
+  newGameConfirm.classList.remove('show');
+  if(gTimer){ clearInterval(gTimer); gTimer = null; }
+  // 先等待当前进度写入服务器，避免随后的读取拿到旧值
+  try{
+    await fetch('/api/config', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ gameState: serializeGameState() })
+    });
+  }catch(e){ /* 存档失败也照常回大厅 */ }
+  // 走完整的大厅流程：拉取最新存档、刷新 pendingResume 与「继续上局」按钮
+  gameScreen.classList.add('lobby');
+  await enterGameLobby();
+  document.getElementById('lobbyMain').style.display = 'none';
+  document.getElementById('lobbyDifficulty').style.display = '';
+});
+newGameConfirm.addEventListener('click', e=>{ if(e.target===newGameConfirm) newGameConfirm.classList.remove('show'); });
 document.getElementById('continueGameBtn').addEventListener('click', ()=>{
   if(pendingResume) restoreGame(pendingResume);
 });
@@ -1179,7 +1220,10 @@ async function enterGameLobby(){
       pendingResume = cfg.gameState;
       contBtn.style.display = '';
     }
+    if(cfg.lbOpen !== false) gLbOpen = true;
   }catch(e){ /* 拉取失败则不显示继续按钮 */ }
+  // 大厅内也按记忆的偏好决定是否展示排行榜侧栏
+  if(gLbOpen) openLeaderboard();
 }
 
 function startGame(difficulty){
@@ -1271,7 +1315,7 @@ function resizeGameCanvas(){
   const ctx = gameCanvas.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
-window.addEventListener('resize', ()=>{ if(gameScreen.classList.contains('show')) resizeGameCanvas(); });
+// 窗口尺寸变化时刷新画布与排行榜面板定位（见 syncLbTop 处的统一监听）
 
 // 方块尺寸缩放（同步记忆到服务端）
 let saveTileSizeTimer = null;
@@ -1584,6 +1628,24 @@ function formatDate(iso){
   return `${Y}-${M}-${D}<br>${h}:${m}:${s}`;
 }
 let lbFilterDiff = 'all';
+const LB_FILTER_KEYS = ['all','easy','normal','hard'];
+function setLbFilter(diff){
+  if(!LB_FILTER_KEYS.includes(diff)) diff = 'all';
+  lbFilterDiff = diff;
+  document.querySelectorAll('.lb-tab').forEach(t => t.classList.toggle('active', t.dataset.diff === diff));
+}
+// 排行榜难度筛选记忆到服务端
+let saveLbFilterTimer = null;
+function saveLbFilter(){
+  clearTimeout(saveLbFilterTimer);
+  saveLbFilterTimer = setTimeout(()=>{
+    fetch('/api/config', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ lbFilterDiff })
+    }).catch(()=>{});
+  }, 300);
+}
 function renderLeaderboard(list, highlightDate){
   // 按当前难度筛选
   const filtered = lbFilterDiff === 'all' ? list : list.filter(r => (r.difficulty || 'normal') === lbFilterDiff);
@@ -1592,7 +1654,7 @@ function renderLeaderboard(list, highlightDate){
     return;
   }
   const medal = ['r1','r2','r3'];
-  const rows = list.map((r, i) => {
+  const rows = filtered.map((r, i) => {
     const rankCls = i < 3 ? medal[i] : '';
     const meCls = (highlightDate && r.date === highlightDate) ? ' class="me"' : '';
     const hints = r.hints ?? 0;
@@ -1612,7 +1674,7 @@ function renderLeaderboard(list, highlightDate){
   leaderboardList.innerHTML = `
     <table class="lb-table">
       <colgroup>
-        <col style="width:20px"><col style="width:52px"><col style="width:36px"><col style="width:50px"><col style="width:26px"><col style="width:26px"><col style="width:100px">
+        <col style="width:30px"><col style="width:52px"><col style="width:36px"><col style="width:50px"><col style="width:26px"><col style="width:26px"><col style="width:100px">
       </colgroup>
       <thead><tr>
         <th>#</th><th>用时</th><th>得分</th><th>难度</th><th>提示</th><th>重排</th><th>时间</th>
@@ -1633,9 +1695,20 @@ function saveLbState(){
   }, 300);
 }
 const gameWrap = document.querySelector('.game-wrap');
+const gameHeader = document.querySelector('.game-header');
 function syncLbSpace(){
   gameWrap.classList.toggle('with-lb', leaderboardModal.classList.contains('show'));
 }
+// 面板挂载在 game-screen 上，top 需避开顶栏（顶栏高度随换行变化，动态测量）
+function syncLbTop(){
+  if(!leaderboardModal.classList.contains('show')) return;
+  leaderboardModal.style.top = gameHeader.offsetHeight + 'px';
+}
+window.addEventListener('resize', ()=>{
+  if(!gameScreen.classList.contains('show')) return;
+  resizeGameCanvas();
+  syncLbTop();
+});
 // 用户主动打开（持久化偏好）
 function showLeaderboard(){
   openLeaderboard();
@@ -1659,6 +1732,7 @@ async function openLeaderboard(highlightDate){
   lbRawList = await fetch('/api/leaderboard').then(r=>r.json()).catch(()=>[]);
   renderLeaderboard(lbRawList, highlightDate);
   leaderboardModal.classList.add('show');
+  syncLbTop();
   syncLbSpace();
 }
 document.getElementById('lbBtn').addEventListener('click', toggleLeaderboard);
@@ -1666,10 +1740,9 @@ document.getElementById('leaderboardClose').addEventListener('click', closeLeade
 // 难度标签页切换
 document.querySelectorAll('.lb-tab').forEach(tab => {
   tab.addEventListener('click', ()=>{
-    document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    lbFilterDiff = tab.dataset.diff;
+    setLbFilter(tab.dataset.diff);
     renderLeaderboard(lbRawList);
+    saveLbFilter();
   });
 });
 
@@ -1810,6 +1883,7 @@ document.getElementById('ghClose').addEventListener('click', ()=>{ document.getE
 // Esc：先关提示框，再退出游戏界面
 document.addEventListener('keydown', e=>{
   if(e.key !== 'Escape') return;
+  if(newGameConfirm.classList.contains('show')){ newGameConfirm.classList.remove('show'); return; }
   if(gameAlert.classList.contains('show')){ gameAlert.classList.remove('show'); return; }
   if(leaderboardModal.classList.contains('show')){ closeLeaderboard(); return; }
   if(gameWin.classList.contains('show')) return;
